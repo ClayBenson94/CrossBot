@@ -31,15 +31,6 @@ jobs:
         uses: 'google-github-actions/auth@v1'
         with:
           credentials_json: '${{ secrets.GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY_JSON }}'
-      - name: Build and push
-        uses: docker/build-push-action@v4
-        id: push
-        with:
-          context: .
-          push: true
-          tags: ${{ env.GIT_HASH }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
       - uses: RafikFarhad/push-to-gcr-github-action@v5-beta
         with:
           registry: gcr.io

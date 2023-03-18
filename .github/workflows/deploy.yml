@@ -39,10 +39,10 @@ jobs:
           image_tag: ${{ env.GIT_HASH }}
           dockerfile: ./Dockerfile
           context: .
-      # - id: deploy
-      #   uses: google-github-actions/deploy-cloudrun@v1
-      #   with:
-      #     service: crossbot
-      #     image: "gcr.io/cloudrun/${{ outputs.push.imageid }}"
-      # - name: 'Use output'
-      #   run: 'curl "${{ steps.deploy.outputs.url }}"'
+      - id: deploy
+        uses: google-github-actions/deploy-cloudrun@v1
+        with:
+          service: crossbot
+          image: "gcr.io/crossbot-381014/crossbot:${{ env.GIT_HASH }}"
+      - name: 'Use output'
+        run: 'curl "${{ steps.deploy.outputs.url }}"'

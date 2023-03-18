@@ -1,0 +1,52 @@
+name: Deploy Crossbot
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  GIT_HASH: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Authenticate with Google Cloud
+        id: "auth"
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: "${{ secrets.GOOGLE_CLOUD_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GOOGLE_CLOUD_SERVICE_ACCOUNT }}"
+      - name: Setup docker
+        uses: docker/setup-buildx-action@v2
+      - name: Authenticate docker
+        run: |
+          gcloud auth configure-docker --quiet gcr.io
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        id: push
+        with:
+          context: .
+          push: true
+          tags: ${{ env.GIT_HASH }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      # - id: deploy
+      #   uses: google-github-actions/deploy-cloudrun@v1
+      #   with:
+      #     service: crossbot
+      #     image: "gcr.io/cloudrun/${{ outputs.push.imageid }}"
+      # - name: 'Use output'
+      #   run: 'curl "${{ steps.deploy.outputs.url }}"'

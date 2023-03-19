@@ -44,5 +44,7 @@ jobs:
         with:
           service: crossbot
           image: "gcr.io/crossbot-381014/crossbot:${{ env.GIT_HASH }}"
+          env_vars: |
+            DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}
       - name: 'Use output'
         run: 'curl "${{ steps.deploy.outputs.url }}"'

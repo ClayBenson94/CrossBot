@@ -17,6 +17,6 @@
   },
   "homepage": "https://github.com/ClayBenson94/crossbot#readme",
   "dependencies": {
-    "express": "^4.18.2"
+    "discord.js": "^14.8.0"
   }
 }

@@ -50,7 +50,7 @@ jobs:
         with:
           service: crossbot
           image: "gcr.io/crossbot-381014/crossbot:${{ steps.getsha.outputs.SHA_SHORT }}"
-          tag: "${{ steps.getsha.outputs.SHA_SHORT }}"
+          tag: "sha-${{ steps.getsha.outputs.SHA_SHORT }}"
           env_vars: |
             DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}
             DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
@@ -59,7 +59,7 @@ jobs:
         uses: google-github-actions/deploy-cloudrun@v1
         with:
           service: crossbot
-          tag_traffic: '${{ steps.getsha.outputs.SHA_SHORT }}=100' # Full traffic to the new instance
+          tag_traffic: 'sha-${{ steps.getsha.outputs.SHA_SHORT }}=100' # Full traffic to the new instance
       - name: 'Clean up old images'
         run: 'gcloud container images list-tags gcr.io/crossbot-381014/crossbot --format="get(digest)" --filter="NOT tags:${{ steps.getsha.outputs.SHA_SHORT }}" > tags && while read p; do gcloud container images delete "gcr.io/crossbot-381014/crossbot@$p" --force-delete-tags; done < tags'
       - name: 'Curl service'

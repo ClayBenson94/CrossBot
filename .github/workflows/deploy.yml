@@ -33,6 +33,8 @@ jobs:
         uses: 'google-github-actions/auth@v1'
         with:
           credentials_json: '${{ secrets.GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY_JSON }}'
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v1'
       - uses: RafikFarhad/push-to-gcr-github-action@v5-beta
         with:
           registry: gcr.io
@@ -46,8 +48,12 @@ jobs:
         with:
           service: crossbot
           image: "gcr.io/crossbot-381014/crossbot:${{ env.GIT_HASH }}"
+          tag: "${{ env.GIT_HASH }}"
+          revision_traffic: '${{ env.GIT_HASH }}=100' # Full traffic to the new instance
           env_vars: |
             DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}
             DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
-      - name: 'Use output'
+      - name: 'Clean up old images'
+        run: 'gcloud container images list-tags gcr.io/crossbot-381014/crossbot --format="get(digest) --filter="NOT tags:${{ env.GIT_HASH }}" > tags && while read p; do gcloud container images delete "gcr.io/crossbot-381014/crossbot@$p"; done < tags'
+      - name: 'Curl service'
         run: 'curl "${{ steps.deploy.outputs.url }}"'

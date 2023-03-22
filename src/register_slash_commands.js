@@ -7,8 +7,13 @@ const rest = new REST({ version: '10' }).setToken(token);
 
 async function registerSlashCommands(commandDataArray) {
 	try {
-		console.log(`Refreshing commands.`);
+		console.log(`Deleting all commands.`);
+		await rest.put(
+			Routes.applicationCommands(clientId),
+			{ body: [] }, //empty array deletes all commands
+		);
 
+		console.log("Fully refresh all commands.")
 		// The put method is used to fully refresh all commands in the guild with the current set
 		await rest.put(
 			Routes.applicationCommands(clientId),

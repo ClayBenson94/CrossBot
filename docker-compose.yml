@@ -7,6 +7,8 @@ services:
     environment:
       - DISCORD_BOT_TOKEN
       - DISCORD_CLIENT_ID
-      - CROSSBOT_DRY_RUN
+      - ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID
+      - OLD_PUZZLES_CHANNEL_CATEGORY_ID
+      - PUZZ_WATCHERS_ROLE_ID
     ports:
       - 8080:8080

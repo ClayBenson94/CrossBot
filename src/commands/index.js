@@ -2,4 +2,5 @@
 
 module.exports = {
  	newpuzzle: require('./new_puzzle'),
+ 	closepuzzle: require('./close_puzzle'),
 }

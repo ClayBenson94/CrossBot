@@ -1,11 +1,6 @@
 const { SlashCommandBuilder, ChannelType } = require('discord.js');
-const { generateSlug } = require('random-word-slugs')
-
-const ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID="1084525753695215787"
-const PUZZ_WATCHERS_ROLE_ID="1086705029316087908"
-
-const DRY_RUN=process.env.CROSSBOT_DRY_RUN == "1"
-const DRY_RUN_CHANNEL_CATEGORY_ID="1084539498278424707"
+const { generateSlug } = require('random-word-slugs');
+const { ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID, PUZZ_WATCHERS_ROLE_ID } = require('../../config')
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -33,16 +28,11 @@ module.exports = {
 				format: 'kebab',
 				partsOfSpeech: ['adjective', 'adjective', 'noun']
 			}).replaceAll('-', '_');
-	
-			let categoryID = ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID;
-			if (DRY_RUN) {
-				categoryID = DRY_RUN_CHANNEL_CATEGORY_ID;
-			}
 
 			// Check to see if we have too many puzzles already
 			const allChannels = await interaction.member.guild.channels.fetch()
 			const numActivePuzzles = allChannels.filter(ch => {
-				return ch.parentId === categoryID
+				return ch.parentId === ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID
 			}).size
 			
 			if (numActivePuzzles >= 5) {
@@ -51,7 +41,7 @@ module.exports = {
 			}
 	
 			// make the channel
-			const categoryChannel = await interaction.member.guild.channels.fetch(categoryID)
+			const categoryChannel = await interaction.member.guild.channels.fetch(ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID)
 			const createdChannel = await interaction.member.guild.channels.create({
 				name: channelName,
 				type: ChannelType.GuildText,
@@ -60,7 +50,7 @@ module.exports = {
 			});
 	
 			// send an announcement message
-			await createdChannel.send(`🧩🚨 <@&${PUZZ_WATCHERS_ROLE_ID}>\nNew Puzzle alert!\n\nHead on over to ${url} to play along! 📝\n\nThanks to <@${interaction.member.id}>, for submitting this one! 🤜 🤛`)
+			await createdChannel.send(`🧩🚨 <@&${PUZZ_WATCHERS_ROLE_ID}>\nNew Puzzle alert!\n\nHead on over to ${url} to play along! 📝\n\nThanks to <@${interaction.member.id}> for submitting this one! 🤜 🤛`)
 
 			// Reply to the user to point them to the new channel
 			await interaction.editReply({content: `<#${createdChannel.id}> has been created! 🎉`, ephemeral: true});

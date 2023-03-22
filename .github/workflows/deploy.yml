@@ -53,6 +53,9 @@ jobs:
           env_vars: |
             DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}
             DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
+            ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID=${{ secrets.ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID }}
+            OLD_PUZZLES_CHANNEL_CATEGORY_ID=${{ secrets.OLD_PUZZLES_CHANNEL_CATEGORY_ID }}
+            PUZZ_WATCHERS_ROLE_ID=${{ secrets.PUZZ_WATCHERS_ROLE_ID }}
       - id: update-traffic
         name: Update traffic to new instance
         uses: google-github-actions/deploy-cloudrun@v1

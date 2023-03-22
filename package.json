@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/ClayBenson94/crossbot#readme",
   "dependencies": {
-    "discord.js": "^14.8.0"
+    "discord.js": "^14.8.0",
+    "random-word-slugs": "^0.1.6"
   }
 }

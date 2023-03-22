@@ -61,6 +61,6 @@ jobs:
           service: crossbot
           tag_traffic: '${{ steps.getsha.outputs.SHA_SHORT }}=100' # Full traffic to the new instance
       - name: 'Clean up old images'
-        run: 'gcloud container images list-tags gcr.io/crossbot-381014/crossbot --format="get(digest)" --filter="NOT tags:${{ steps.getsha.outputs.SHA_SHORT }}" > tags && while read p; do gcloud container images delete "gcr.io/crossbot-381014/crossbot@$p"; done < tags'
+        run: 'gcloud container images list-tags gcr.io/crossbot-381014/crossbot --format="get(digest)" --filter="NOT tags:${{ steps.getsha.outputs.SHA_SHORT }}" > tags && while read p; do gcloud container images delete "gcr.io/crossbot-381014/crossbot@$p" --force-delete-tags; done < tags'
       - name: 'Curl service'
         run: 'curl "${{ steps.deploy.outputs.url }}"'

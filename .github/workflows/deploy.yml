@@ -49,6 +49,7 @@ jobs:
         with:
           service: crossbot
           image: "gcr.io/crossbot-381014/crossbot:${{ env.GIT_HASH }}"
+          tag: "${{ env.GIT_HASH }}"
           env_vars: |
             DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}
             DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}

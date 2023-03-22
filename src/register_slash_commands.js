@@ -13,7 +13,6 @@ async function registerSlashCommands(commandDataArray) {
 			{ body: [] }, //empty array deletes all commands
 		);
 
-		console.log("Fully refresh all commands.")
 		// The put method is used to fully refresh all commands in the guild with the current set
 		await rest.put(
 			Routes.applicationCommands(clientId),

@@ -1,0 +1,32 @@
+name: Redeploy all slash commands
+
+# Controls when the workflow will run
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-commands
+
+
+jobs:
+  deploy:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    environment: prod
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.15.0
+      - name: 'Run script to redeploy slash commands'
+        env:
+          DISCORD_BOT_TOKEN: "${{ secrets.DISCORD_BOT_TOKEN }}"
+          DISCORD_CLIENT_ID: "${{ secrets.DISCORD_CLIENT_ID }}"
+        run: 'node scripts/redeploy_slash_commands.js'

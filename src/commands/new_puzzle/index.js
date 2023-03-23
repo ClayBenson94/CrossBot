@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ChannelType } = require('discord.js');
+const { SlashCommandBuilder, ChannelType, ButtonStyle, ActionRowBuilder, ButtonBuilder } = require('discord.js');
 const { generateSlug } = require('random-word-slugs');
 const { ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID, PUZZ_WATCHERS_ROLE_ID } = require('../../config')
 
@@ -12,22 +12,19 @@ module.exports = {
 			.setRequired(true)),
 	async execute(interaction) {
 		try {
-			const DFAC_REGEX = /https:\/\/downforacross.com\/beta\/game\/(.*)/igm //create this each function so that .test() doesn't mess up lastindex
+			const DFAC_REGEX = /https:\/\/downforacross.com\/beta\/game\/(.*)/im //create this each function so that .test() doesn't mess up lastindex
 			await interaction.deferReply({ephemeral: true});
 			const url = interaction.options.getString('url');
 	
-			if (!DFAC_REGEX.test(url)) {
+			const match = url.match(DFAC_REGEX)
+			if (!match) {
 				await interaction.editReply({
 					content: "⚠️ Your URL didn't seem to be quite what I expected.\nMake sure it's got \"/beta/game\" in it to ensure it's a puzzle session!",
 					ephemeral: true
 				})
 				return
 			}
-	
-			const channelName = generateSlug(3, {
-				format: 'kebab',
-				partsOfSpeech: ['adjective', 'adjective', 'noun']
-			}).replaceAll('-', '_');
+			const [_, gameID] = match;
 
 			// Check to see if we have too many puzzles already
 			const allChannels = await interaction.member.guild.channels.fetch()
@@ -43,14 +40,25 @@ module.exports = {
 			// make the channel
 			const categoryChannel = await interaction.member.guild.channels.fetch(ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID)
 			const createdChannel = await interaction.member.guild.channels.create({
-				name: channelName,
+				name: gameID,
 				type: ChannelType.GuildText,
-				topic: `Head on over to ${url} to play along! 📝`,
 				parent: categoryChannel,
 			});
 	
-			// send an announcement message
-			await createdChannel.send(`🧩🚨 <@&${PUZZ_WATCHERS_ROLE_ID}>\nNew Puzzle alert!\n\nHead on over to ${url} to play along! 📝\n\nThanks to <@${interaction.member.id}> for submitting this one! 🤜 🤛`)
+			// build and send an announcement message
+			const row = new ActionRowBuilder()
+			.addComponents(
+				new ButtonBuilder()
+					.setLabel('Play this crossword!')
+					.setStyle(ButtonStyle.Link)
+					.setURL(url),
+			)
+
+			const msg = await createdChannel.send({
+				content: `🧩🚨 <@&${PUZZ_WATCHERS_ROLE_ID}> New Puzzle added!\nThanks to <@${interaction.member.id}> for submitting this one! 🤜 🤛`,
+				components: [row]
+			});
+			await msg.pin();
 
 			// Reply to the user to point them to the new channel
 			await interaction.editReply({content: `<#${createdChannel.id}> has been created! 🎉`, ephemeral: true});

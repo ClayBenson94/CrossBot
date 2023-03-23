@@ -27,7 +27,7 @@ module.exports = {
 			await channelSentIn.send(`🏁 This puzzle has been marked as completed by <@${interaction.member.id}>! It took ${timeDiff} to solve! 🕔🎉`)
 			await channelSentIn.setParent(OLD_PUZZLES_CHANNEL_CATEGORY_ID)
 
-			await interaction.editReply({content: `Nice`, ephemeral: true});
+			await interaction.editReply({content: `You closed <#${channelSentIn.id}>`, ephemeral: true});
 		} catch (e) {
 			console.error("Error in command", e)
 		}

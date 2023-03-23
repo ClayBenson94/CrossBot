@@ -1,5 +1,4 @@
 const { SlashCommandBuilder, ChannelType, ButtonStyle, ActionRowBuilder, ButtonBuilder } = require('discord.js');
-const { generateSlug } = require('random-word-slugs');
 const { ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID, PUZZ_WATCHERS_ROLE_ID } = require('../../config')
 
 module.exports = {

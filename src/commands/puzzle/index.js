@@ -117,12 +117,17 @@ async function closepuzzle(interaction) {
 
 		// Get a screenshot of the puzzle
 		const urlToScreenshot = `https://downforacross.com/beta/game/${channelSentIn.name}`
+		console.log("launching chromium");
 		const browser = await chromium.launch();
+		console.log("new page");
 		const page = await browser.newPage();
 		await page.setViewportSize({ width: 1280, height: 1080 });
 		await page.goto(urlToScreenshot);
+		console.log("went to page");
 		const screenshot = await page.locator('.player--main--left--grid').screenshot();
+		console.log("took screenshot");
 		await browser.close();
+		console.log("broswer closed");
 
 		const attachment = new AttachmentBuilder(screenshot, `${channelSentIn.name}.png`);
 

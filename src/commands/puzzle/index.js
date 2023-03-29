@@ -1,4 +1,6 @@
-const { SlashCommandBuilder, ChannelType, ButtonStyle, ActionRowBuilder, ButtonBuilder } = require('discord.js');
+const { SlashCommandBuilder, ChannelType, ButtonStyle, ActionRowBuilder, ButtonBuilder, AttachmentBuilder } = require('discord.js');
+// const puppeteer = require('puppeteer');
+const { chromium } = require("playwright");
 const { ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID, PUZZ_WATCHERS_ROLE_ID, OLD_PUZZLES_CHANNEL_CATEGORY_ID } = require('../../config');
 const dayjs = require('dayjs');
 const relativeTime = require('dayjs/plugin/relativeTime');
@@ -113,8 +115,22 @@ async function closepuzzle(interaction) {
 			return
 		}
 
+		// Get a screenshot of the puzzle
+		const urlToScreenshot = `https://downforacross.com/beta/game/${channelSentIn.name}`
+		const browser = await chromium.launch();
+		const page = await browser.newPage();
+		await page.setViewportSize({ width: 1280, height: 1080 });
+		await page.goto(urlToScreenshot);
+		const screenshot = await page.locator('.player--main--left--grid').screenshot();
+		await browser.close();
+
+		const attachment = new AttachmentBuilder(screenshot, `${channelSentIn.name}.png`);
+
 		const timeDiff = dayjs(channelSentIn.createdAt).fromNow(true)
-		await channelSentIn.send(`🏁 This puzzle has been marked as completed by <@${interaction.member.id}>! It took ${timeDiff} to solve! 🕔🎉`)
+		await channelSentIn.send({
+			content: `🏁 This puzzle has been marked as completed by <@${interaction.member.id}>! It took ${timeDiff} to solve! 🕔🎉`,
+			files: [attachment],
+		});
 		await channelSentIn.setParent(OLD_PUZZLES_CHANNEL_CATEGORY_ID)
 
 		await interaction.editReply({content: `You closed <#${channelSentIn.id}>`, ephemeral: true});

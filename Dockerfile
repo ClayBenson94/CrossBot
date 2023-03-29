@@ -9,7 +9,6 @@ COPY package-lock.json ./
 RUN npm ci
 
 COPY ./src/ ./src/
-COPY ./node_modules/ ./
 
 # FROM gcr.io/distroless/nodejs
 

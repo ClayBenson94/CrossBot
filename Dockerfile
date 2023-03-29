@@ -8,8 +8,8 @@ COPY package.json ./
 COPY package-lock.json ./
 RUN npm ci
 
-COPY src/ ./src/
-COPY node_modules/ ./
+COPY ./src/ ./src/
+COPY ./node_modules/ ./
 
 # FROM gcr.io/distroless/nodejs
 

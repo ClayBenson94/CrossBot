@@ -1,11 +1,11 @@
-const { Client, Events, GatewayIntentBits, Collection } = require('discord.js');
+const { Client, Events, GatewayIntentBits, Collection, MessageType } = require('discord.js');
 const commands = require('./commands')
 
 const token = process.env.DISCORD_BOT_TOKEN;
 
 function SetupClient(login = true) {
 	// Create a new client instance and set a callback to log when it's ready
-	const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+	const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
 
 	// Instantiate all client commands
 	client.commands = new Collection();
@@ -32,6 +32,17 @@ function SetupClient(login = true) {
 			} else {
 				await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
 			}
+		}
+	});
+
+	// Delete own pin messages
+	client.on(Events.MessageCreate, async message => {
+		const isFromBot = message.author.bot;
+		const isPinMessage = message.type === MessageType.ChannelPinnedMessage;
+		const isFromSelf = message.author.id === client.user.id;
+
+		if (isFromBot && isPinMessage && isFromSelf) {
+			await message.delete();
 		}
 	});
 

@@ -117,23 +117,20 @@ async function closepuzzle(interaction) {
 
 		// Get a screenshot of the puzzle
 		const urlToScreenshot = `https://downforacross.com/beta/game/${channelSentIn.name}`
-		console.log("launching chromium");
 		const browser = await chromium.launch();
-		console.log("new page");
 		const page = await browser.newPage();
 		await page.setViewportSize({ width: 1280, height: 1080 });
 		await page.goto(urlToScreenshot);
-		console.log("went to page");
 		const screenshot = await page.locator('.player--main--left--grid').screenshot();
-		console.log("took screenshot");
+		const numPlayers = await page.locator('.dot').count() - 1; // minus one because of the bot being a player when visiting this page
 		await browser.close();
-		console.log("broswer closed");
 
 		const attachment = new AttachmentBuilder(screenshot, `${channelSentIn.name}.png`);
 
 		const timeDiff = dayjs(channelSentIn.createdAt).fromNow(true)
+		const numPlayersString = numPlayers === 1 ? `only one person... probably <@${interaction.member.id}>` : `${numPlayers} people`
 		await channelSentIn.send({
-			content: `🏁 This puzzle has been marked as completed by <@${interaction.member.id}>! It took ${timeDiff} to solve! 🕔🎉`,
+			content: `🏁 This puzzle has been marked as completed by <@${interaction.member.id}>! It took ${timeDiff} to solve, and was worked on by ${numPlayersString}! 🕔🎉`,
 			files: [attachment],
 		});
 		await channelSentIn.setParent(OLD_PUZZLES_CHANNEL_CATEGORY_ID)

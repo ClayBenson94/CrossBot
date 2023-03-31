@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, ChannelType, ButtonStyle, ActionRowBuilder, ButtonBuilder, AttachmentBuilder } = require('discord.js');
-// const puppeteer = require('puppeteer');
 const { chromium } = require("playwright");
+const slugify = require("slugify");
 const { ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID, PUZZ_WATCHERS_ROLE_ID, OLD_PUZZLES_CHANNEL_CATEGORY_ID } = require('../../config');
 const dayjs = require('dayjs');
 const relativeTime = require('dayjs/plugin/relativeTime');
@@ -57,7 +57,6 @@ async function newpuzzle(interaction) {
 			})
 			return
 		}
-		const [_, gameID] = match;
 
 		// Check to see if we have too many puzzles already
 		const allChannels = await interaction.member.guild.channels.fetch()
@@ -70,12 +69,28 @@ async function newpuzzle(interaction) {
 			return;
 		}
 
+		// Get the title of the puzzle
+		const browser = await chromium.launch();
+		const page = await browser.newPage();
+		await page.setViewportSize({ width: 1280, height: 1080 });
+		await page.goto(url);
+		const puzzleTitle = await page.locator('.chat--header--title').textContent();
+		await browser.close();
+
+		// slugify the title
+		const channelTitle = slugify(puzzleTitle, {
+			remove: /[,._\-'"]/gm,
+			replacement: '_',
+			lower: true,
+		});
+
 		// make the channel
 		const categoryChannel = await interaction.member.guild.channels.fetch(ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID)
 		const createdChannel = await interaction.member.guild.channels.create({
-			name: gameID,
+			name: channelTitle,
 			type: ChannelType.GuildText,
 			parent: categoryChannel,
+			topic: url
 		});
 
 		// build and send an announcement message
@@ -97,6 +112,7 @@ async function newpuzzle(interaction) {
 		await interaction.editReply({content: `<#${createdChannel.id}> has been created! 🎉`, ephemeral: true});
 	} catch (e) {
 		console.error("Error in command", e)
+		await interaction.editReply({content: `⚠️ Error running command. Please reach out to my developer`, ephemeral: true});
 	}
 }
 
@@ -116,13 +132,13 @@ async function closepuzzle(interaction) {
 		}
 
 		// Get a screenshot of the puzzle
-		const urlToScreenshot = `https://downforacross.com/beta/game/${channelSentIn.name}`
+		const urlToScreenshot = channelSentIn.topic;
 		const browser = await chromium.launch();
 		const page = await browser.newPage();
 		await page.setViewportSize({ width: 1280, height: 1080 });
 		await page.goto(urlToScreenshot);
 		const screenshot = await page.locator('.player--main--left--grid').screenshot();
-		const numPlayers = await page.locator('.dot').count() - 1; // minus one because of the bot being a player when visiting this page
+		const numPlayers = await page.locator('.dot').count() - 2; // minus two because of the bot being a player when visiting this page (once on create, once on close)
 		await browser.close();
 
 		const attachment = new AttachmentBuilder(screenshot, `${channelSentIn.name}.png`);
@@ -138,5 +154,6 @@ async function closepuzzle(interaction) {
 		await interaction.editReply({content: `You closed <#${channelSentIn.id}>`, ephemeral: true});
 	} catch (e) {
 		console.error("Error in command", e)
+		await interaction.editReply({content: `⚠️ Error running command. Please reach out to my developer`, ephemeral: true});
 	}
 }

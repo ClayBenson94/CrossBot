@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ChannelType, ButtonStyle, ActionRowBuilder, ButtonBuilder, AttachmentBuilder } = require('discord.js');
+const { SlashCommandBuilder, ChannelType, ButtonStyle, ActionRowBuilder, ButtonBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const { chromium } = require("playwright");
 const slugify = require("slugify");
 const { ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID, PUZZ_WATCHERS_ROLE_ID, OLD_PUZZLES_CHANNEL_CATEGORY_ID } = require('../../config');
@@ -139,14 +139,23 @@ async function closepuzzle(interaction) {
 		await page.goto(urlToScreenshot);
 		const screenshot = await page.locator('.player--main--left--grid').screenshot();
 		const numPlayers = await page.locator('.dot').count() - 2; // minus two because of the bot being a player when visiting this page (once on create, once on close)
+		// const solvingTime = (await page.locator('.clock').textContent()).replaceAll("(",'').replaceAll(")","")
 		await browser.close();
 
 		const attachment = new AttachmentBuilder(screenshot, `${channelSentIn.name}.png`);
-
 		const timeDiff = dayjs(channelSentIn.createdAt).fromNow(true)
-		const numPlayersString = numPlayers === 1 ? `only one person... probably <@${interaction.member.id}>` : `${numPlayers} people`
+		const embed = new EmbedBuilder()
+			.setColor(0xFFFF00)
+			.setTitle("🏁 This puzzle has been marked as completed!")
+			.addFields(
+				{ name: '🕔 Time to Complete', value: `${timeDiff}` },
+				// { name: '🤔 Time Spent Solving', value: `${solvingTime}` },
+				{ name: '👥 Number of Players', value: `${numPlayers}` },
+				{ name: '👨‍💻 Finished by', value: `<@${interaction.member.id}>` },
+			)
+
 		await channelSentIn.send({
-			content: `🏁 This puzzle has been marked as completed by <@${interaction.member.id}>! It took ${timeDiff} to solve, and was worked on by ${numPlayersString}! 🕔🎉`,
+			embeds: [embed],
 			files: [attachment],
 		});
 		await channelSentIn.setParent(OLD_PUZZLES_CHANNEL_CATEGORY_ID)

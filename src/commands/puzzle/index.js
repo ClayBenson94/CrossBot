@@ -139,7 +139,8 @@ async function closepuzzle(interaction) {
 		await page.goto(urlToScreenshot);
 		const screenshot = await page.locator('.player--main--left--grid').screenshot();
 		const numPlayers = await page.locator('.dot').count() - 2; // minus two because of the bot being a player when visiting this page (once on create, once on close)
-		// const solvingTime = (await page.locator('.clock').textContent()).replaceAll("(",'').replaceAll(")","")
+		await page.waitForTimeout(1000) // wait for the clock to update
+		const solvingTime = (await page.locator('.clock').textContent()).replaceAll("(",'').replaceAll(")","")
 		await browser.close();
 
 		const attachment = new AttachmentBuilder(screenshot, `${channelSentIn.name}.png`);
@@ -149,7 +150,7 @@ async function closepuzzle(interaction) {
 			.setTitle("🏁 This puzzle has been marked as completed!")
 			.addFields(
 				{ name: '🕔 Time to Complete', value: `${timeDiff}` },
-				// { name: '🤔 Time Spent Solving', value: `${solvingTime}` },
+				{ name: '🤔 Time Spent Solving', value: `${solvingTime}` },
 				{ name: '👥 Number of Players', value: `${numPlayers}` },
 				{ name: '👨‍💻 Finished by', value: `<@${interaction.member.id}>` },
 			)

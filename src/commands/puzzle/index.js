@@ -84,6 +84,16 @@ async function newpuzzle(interaction) {
 			lower: true,
 		});
 
+		// Check to see if there's another channel already with this title
+		const existingChannel = allChannels.find(ch => {
+			return ch.name === channelTitle;
+		})
+
+		if (existingChannel) {
+			await interaction.editReply({content: `⚠️ There's already a channel for this puzzle! <#${existingChannel.id}>`, ephemeral: true});
+			return;
+		}
+
 		// make the channel
 		const categoryChannel = await interaction.member.guild.channels.fetch(ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID)
 		const createdChannel = await interaction.member.guild.channels.create({

@@ -141,6 +141,41 @@ async function closepuzzle(interaction) {
 			return
 		}
 
+		// Fetch all puzzles in the old puzzles channel
+		const allChannels = await interaction.member.guild.channels.fetch()
+		const oldPuzzles = allChannels.filter(ch => {
+			return ch.parentId === OLD_PUZZLES_CHANNEL_CATEGORY_ID
+		})
+
+		const MAX_OLD_PUZZLES = 45; // Discord has a max of 50 channels, so stay just a few short of that
+		// If we have too many old puzzles and need to start deleting them
+		if (oldPuzzles.size > MAX_OLD_PUZZLES) {
+			// Fetch message counts per channel to identify which to delete
+			const channelsWithIDsAndMessageCounts = [];
+			for (const [channelID, channel] of oldPuzzles) {
+				const messages = await channel.messages.fetch({cache: true})
+				channelsWithIDsAndMessageCounts.push({
+					id: channelID,
+					messageCount: messages.size
+				})
+			}
+
+			// Sort channels by the least messages
+			channelsWithIDsAndMessageCounts.sort((a,b) => {
+				return a.messageCount - b.messageCount
+			});
+
+			// Calculate how many puzzles we need to delete to get to MAX_OLD_PUZZLES
+			const numPuzzlesToDelete = oldPuzzles.size - MAX_OLD_PUZZLES;
+
+			// Delete the puzzles with the smallest number of messages until we get to MAX_OLD_PUZZLES
+			for (let i = 0; i < numPuzzlesToDelete; i++) {
+				const channelIDToDelete = channelsWithIDsAndMessageCounts[i].id;
+				const channelToDelete = await interaction.member.guild.channels.fetch(channelIDToDelete)
+				await channelToDelete.delete();
+			}
+		}
+
 		// Get a screenshot of the puzzle
 		const urlToScreenshot = channelSentIn.topic;
 		const browser = await chromium.launch();
@@ -153,7 +188,7 @@ async function closepuzzle(interaction) {
 		const solvingTime = (await page.locator('.clock').textContent()).replaceAll("(",'').replaceAll(")","")
 		await browser.close();
 
-		const attachment = new AttachmentBuilder(screenshot, `${channelSentIn.name}.png`);
+		const attachment = new AttachmentBuilder(screenshot, {name: `${channelSentIn.name}.png`});
 		const timeDiff = dayjs(channelSentIn.createdAt).fromNow(true)
 		const embed = new EmbedBuilder()
 			.setColor(0xFFFF00)
@@ -169,8 +204,11 @@ async function closepuzzle(interaction) {
 			embeds: [embed],
 			files: [attachment],
 		});
+
+		// Move the channel to the old puzzles category
 		await channelSentIn.setParent(OLD_PUZZLES_CHANNEL_CATEGORY_ID)
 
+		// Reply with a success message
 		await interaction.editReply({content: `You closed <#${channelSentIn.id}>`, ephemeral: true});
 	} catch (e) {
 		console.error("Error in command", e)

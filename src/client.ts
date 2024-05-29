@@ -1,22 +1,28 @@
-const { Client, Events, GatewayIntentBits, Collection, MessageType } = require('discord.js');
-const commands = require('./commands')
+import { Client, Events, GatewayIntentBits, Collection, MessageType, ApplicationCommand } from 'discord.js';
+import {SlashCommand, commands} from './commands';
 
 const token = process.env.DISCORD_BOT_TOKEN;
 
-function SetupClient(login = true) {
+interface ClientWithCommands extends Client {
+	commands: Collection<string, SlashCommand>
+}
+
+export function SetupClient(login = true) {
 	// Create a new client instance and set a callback to log when it's ready
-	const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
+	const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] }) as ClientWithCommands;
 
 	// Instantiate all client commands
 	client.commands = new Collection();
-	for (const key in commands) {
-		const command = commands[key];
+	for (const command of commands) {
 		client.commands.set(command.data.name, command)
 	}
 
 	// Set up interaction handling
 	client.on(Events.InteractionCreate, async interaction => {
-		const command = interaction.client.commands.get(interaction.commandName);
+		if (!interaction.isChatInputCommand()) return;
+
+		const ic = interaction.client as ClientWithCommands;
+		const command = ic.commands.get(interaction.commandName);
 
 		if (!command) {
 			console.error(`No command matching ${interaction.commandName} was found.`);
@@ -39,7 +45,7 @@ function SetupClient(login = true) {
 	client.on(Events.MessageCreate, async message => {
 		const isFromBot = message.author.bot;
 		const isPinMessage = message.type === MessageType.ChannelPinnedMessage;
-		const isFromSelf = message.author.id === client.user.id;
+		const isFromSelf = message.author.id === client.user?.id;
 
 		if (isFromBot && isPinMessage && isFromSelf) {
 			await message.delete();

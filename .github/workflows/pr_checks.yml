@@ -1,0 +1,35 @@
+name: PR Checks
+
+on:
+  pull_request:
+
+# This concurrency group exists with cancel-in-progress: true so that only the latest run of the workflow is executed (as its all that should matter).
+concurrency:
+  group: pr-build-and-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: Set up node
+        uses: actions/setup-node@v4
+      - name: Install npm modules
+        run: npm ci
+      - name: Run ESLint
+        run: npm run lint
+  tsc:
+    name: Typescript Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: Set up node
+        uses: actions/setup-node@v4
+      - name: Install npm modules
+        run: npm ci
+      - name: Run ESLint
+        run: npm run typecheck

@@ -60,7 +60,7 @@ export default {
 	},
 } as SlashCommand;
 
-async function newpuzzle(interaction: ChatInputCommandInteraction) {
+async function newpuzzle(interaction) {
 	try {
 		await interaction.deferReply({
 			ephemeral: true,

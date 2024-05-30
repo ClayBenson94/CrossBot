@@ -13,7 +13,7 @@ import {
 } from 'discord.js';
 import { SlashCommand } from '../';
 import { chromium } from 'playwright';
-import slugify from 'slugify';
+import slugify from "slugify";
 import {
 	ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID,
 	PUZZ_WATCHERS_ROLE_ID,

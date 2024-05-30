@@ -1,0 +1,43 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "./tsconfig.json",
+    "tsconfigRootDir": "./"
+  },
+  "plugins": [
+    "@typescript-eslint",
+    "@stylistic",
+    "import-newlines"
+  ],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@stylistic/recommended-extends"
+  ],
+  "ignorePatterns": ["node_modules/*", "build/*", "scripts/*"],
+  "rules": {
+    // Variables starting with "_" are considered to be unused, and shouldn't be considered errors
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
+    // Ensure indentation is set to 1 tab
+    "@stylistic/indent": ["error", "tab"],
+    "@stylistic/no-tabs": "off",
+
+    // Ensure semicolons are always used
+    "@stylistic/semi": ["error", "always"],
+
+    // Ensure there's always newlines on import statements with more than 2 items being destructured
+    "import-newlines/enforce": [
+      "error",
+      {
+        "items": 2
+      }
+    ]
+  }
+}

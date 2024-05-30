@@ -1,5 +1,11 @@
-import { Client, Events, GatewayIntentBits, Collection, MessageType, ApplicationCommand } from 'discord.js';
-import {SlashCommand, commands} from './commands';
+import {
+	Client,
+	Events,
+	GatewayIntentBits,
+	Collection,
+	MessageType,
+} from 'discord.js';
+import { SlashCommand, commands } from './commands';
 
 const token = process.env.DISCORD_BOT_TOKEN;
 
@@ -9,16 +15,18 @@ interface ClientWithCommands extends Client {
 
 export function SetupClient(login = true) {
 	// Create a new client instance and set a callback to log when it's ready
-	const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] }) as ClientWithCommands;
+	const client = new Client({
+		intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+	}) as ClientWithCommands;
 
 	// Instantiate all client commands
 	client.commands = new Collection();
 	for (const command of commands) {
-		client.commands.set(command.data.name, command)
+		client.commands.set(command.data.name, command);
 	}
 
 	// Set up interaction handling
-	client.on(Events.InteractionCreate, async interaction => {
+	client.on(Events.InteractionCreate, async (interaction) => {
 		if (!interaction.isChatInputCommand()) return;
 
 		const ic = interaction.client as ClientWithCommands;
@@ -31,18 +39,26 @@ export function SetupClient(login = true) {
 
 		try {
 			await command.execute(interaction);
-		} catch (error) {
+		}
+		catch (error) {
 			console.error(error);
 			if (interaction.replied || interaction.deferred) {
-				await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
-			} else {
-				await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+				await interaction.reply({
+					content: 'There was an error while executing this command!',
+					ephemeral: true,
+				});
+			}
+			else {
+				await interaction.reply({
+					content: 'There was an error while executing this command!',
+					ephemeral: true,
+				});
 			}
 		}
 	});
 
 	// Delete own pin messages
-	client.on(Events.MessageCreate, async message => {
+	client.on(Events.MessageCreate, async (message) => {
 		const isFromBot = message.author.bot;
 		const isPinMessage = message.type === MessageType.ChannelPinnedMessage;
 		const isFromSelf = message.author.id === client.user?.id;
@@ -57,19 +73,17 @@ export function SetupClient(login = true) {
 		client.login(token);
 
 		const clientLoggedInPromise = new Promise((resolve, _) => {
-			client.once(Events.ClientReady, c => {
+			client.once(Events.ClientReady, (c) => {
 				console.log(`Ready! Logged in as ${c.user.tag}`);
-				resolve(client)
+				resolve(client);
 			});
 		});
 
-		return clientLoggedInPromise
-	} else { // otherwise, just return the client without logging in
-		return new Promise((res, _) => {res(client)})
+		return clientLoggedInPromise;
 	}
-
-}
-
-module.exports = {
-	SetupClient
+	else { // otherwise, just return the client without logging in
+		return new Promise((res, _) => {
+			res(client);
+		});
+	}
 }

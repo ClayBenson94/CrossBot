@@ -4,10 +4,10 @@ import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import puzzle from './puzzle';
 
 export type SlashCommand = {
-	data: SlashCommandBuilder;
-	execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
+	data: SlashCommandBuilder
+	execute: (interaction: ChatInputCommandInteraction) => Promise<void>
 };
 
 export const commands = [
 	puzzle,
-]
+];

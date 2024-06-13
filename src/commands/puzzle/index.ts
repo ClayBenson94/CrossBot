@@ -9,7 +9,6 @@ import {
 import { SlashCommand } from '../';
 import { chromium } from 'playwright';
 import slugify from 'slugify';
-import { ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID, OLD_PUZZLES_CHANNEL_CATEGORY_ID } from '../../config';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import {
@@ -17,7 +16,8 @@ import {
 	checkIfTooManyPuzzles,
 	fetchPuzzleTitleFromUrl,
 	createChannel,
-} from './new';
+} from './helpers';
+import config from '../../config';
 dayjs.extend(relativeTime);
 
 const NEW_PUZZLE_SUBCMD = 'new';
@@ -134,7 +134,7 @@ async function closepuzzle(interaction: ChatInputCommandInteraction) {
 		// Check to see if this was invoked in an active puzzle channel
 		const channelSentIn = await interaction.guild.channels.fetch(interaction.channelId) as TextChannel;
 
-		if (channelSentIn?.parentId !== ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID) {
+		if (channelSentIn?.parentId !== config.activePuzzlesChannelCategoryId) {
 			await interaction.editReply('☝️ Tsk tsk! You can\'t use this command to archive anything but puzzles in the "Active Puzzles" category!');
 			return;
 		}
@@ -143,7 +143,7 @@ async function closepuzzle(interaction: ChatInputCommandInteraction) {
 		const allChannels = await interaction.guild.channels.fetch();
 		const oldPuzzles = allChannels.filter((ch) => {
 			const isTextBased = ch?.isTextBased();
-			const isPartOfOldChannelCategory = ch && ch.parentId === OLD_PUZZLES_CHANNEL_CATEGORY_ID;
+			const isPartOfOldChannelCategory = ch && ch.parentId === config.oldPuzzlesChannelCategoryId;
 			return isTextBased && isPartOfOldChannelCategory;
 		}) as Collection<string, TextChannel>; // This TextChannel cast is safe because we're filtering for text channels with .isTextBased()
 
@@ -232,7 +232,7 @@ async function closepuzzle(interaction: ChatInputCommandInteraction) {
 		});
 
 		// Move the channel to the old puzzles category
-		await channelSentIn.setParent(OLD_PUZZLES_CHANNEL_CATEGORY_ID);
+		await channelSentIn.setParent(config.oldPuzzlesChannelCategoryId);
 
 		// Reply with a success message
 		await interaction.editReply(`You closed <#${channelSentIn.id}>`);

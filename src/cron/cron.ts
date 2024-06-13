@@ -2,19 +2,18 @@ import cron from 'node-cron';
 import dayjs from 'dayjs';
 import { ClientWithCommands } from '../client';
 import slugify from 'slugify';
-import { checkIfTooManyPuzzles, createChannel } from '../commands/puzzle/new';
+import { checkIfTooManyPuzzles, createChannel } from '../commands/puzzle/helpers';
 import { chromium } from 'playwright';
+import config from '../config';
 
-const searchTerms = ['NY Times', 'LA Times'];
-// const searchTerms = ['NY Times'];
 export default function SetupCron(client: ClientWithCommands) {
-	cron.schedule('0 10 * * *', async () => {
+	cron.schedule(config.dailyPuzzleCronUTC, async () => {
 		const currentDate = dayjs().format('MMM D, YYYY');
 		const guilds = client.guilds.cache.map(guild => guild);
 		const guild = guilds[0]; // assume just one guild :)
 
 		console.log(`Starting daily puzzle fetch (${currentDate})...`);
-		for (const searchTerm of searchTerms) {
+		for (const searchTerm of config.dailyPuzzleTerms) {
 			const allChannels = await guild.channels.fetch();
 			if (await checkIfTooManyPuzzles(guilds[0], allChannels)) {
 				console.log(`\tToo many puzzles, skipping ${searchTerm}`);
@@ -34,7 +33,7 @@ export default function SetupCron(client: ClientWithCommands) {
 			});
 
 			// parse as json
-			const puzzlesJson = (await fetchData.json()) as APIResponse;
+			const puzzlesJson = (await fetchData.json()) as PuzzleListAPIResponse;
 
 			// handle no results. Oops?
 			if (puzzlesJson.puzzles.length === 0) {
@@ -73,7 +72,9 @@ export default function SetupCron(client: ClientWithCommands) {
 	});
 }
 
-interface APIResponse {
+// PuzzleListAPIResponse represents the response from the DownForACross API /api/puzzle_list
+// It only captures the fields this application cares about, not the full response
+interface PuzzleListAPIResponse {
 	puzzles: {
 		pid: string
 		content: {

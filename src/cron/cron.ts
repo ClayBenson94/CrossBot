@@ -1,4 +1,4 @@
-// import cron from 'node-cron';
+import cron from 'node-cron';
 import dayjs from 'dayjs';
 import { ClientWithCommands } from '../client';
 import slugify from 'slugify';
@@ -8,13 +8,8 @@ import { chromium } from 'playwright';
 // const searchTerms = ['NY Times', 'LA Times'];
 const searchTerms = ['NY Times'];
 export default function SetupCron(client: ClientWithCommands) {
-	// cron.schedule('0 10 * * *', async () => {
-	(async () => {
+	cron.schedule('0 10 * * *', async () => {
 		const guilds = client.guilds.cache.map(guild => guild);
-
-		// Iterate over all guilds
-		// for (const guild of guilds) {
-		// }
 
 		// const requestUrl = 'https://api.foracross.com/api/puzzle_list?page=0&pageSize=50&filter%5BnameOrTitleFilter%5D=NY&filter%5BsizeFilter%5D%5BMini%5D=true&filter%5BsizeFilter%5D%5BStandard%5D=true'
 		const searchUrls = [];
@@ -55,13 +50,12 @@ export default function SetupCron(client: ClientWithCommands) {
 				height: 1080,
 			});
 			await page.goto(`https://downforacross.com/beta/play/${puzzleId}`);
+			await page.waitForURL('https://downforacross.com/beta/game/*');
 			const url = await page.url();
-			console.log('URL', url);
 
-			const _ = await createChannel(guilds[0], channelTitle, url, 'bazinga');
+			const _ = await createChannel(guilds[0], channelTitle, url, client.user?.id || '');
 		}
-	// });
-	})();
+	});
 }
 
 interface APIResponse {

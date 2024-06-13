@@ -2,25 +2,30 @@ import cron from 'node-cron';
 import dayjs from 'dayjs';
 import { ClientWithCommands } from '../client';
 import slugify from 'slugify';
-import { createChannel } from '../commands/puzzle/new';
+import { checkIfTooManyPuzzles, createChannel } from '../commands/puzzle/new';
 import { chromium } from 'playwright';
 
-// const searchTerms = ['NY Times', 'LA Times'];
-const searchTerms = ['NY Times'];
+const searchTerms = ['NY Times', 'LA Times'];
+// const searchTerms = ['NY Times'];
 export default function SetupCron(client: ClientWithCommands) {
-	cron.schedule('0 10 * * *', async () => {
+	// cron.schedule('0 10 * * *', async () => {
+	cron.schedule('* * * * *', async () => {
+		const currentDate = dayjs().format('MMM D, YYYY');
 		const guilds = client.guilds.cache.map(guild => guild);
+		const guild = guilds[0]; // assume just one guild :)
 
-		// const requestUrl = 'https://api.foracross.com/api/puzzle_list?page=0&pageSize=50&filter%5BnameOrTitleFilter%5D=NY&filter%5BsizeFilter%5D%5BMini%5D=true&filter%5BsizeFilter%5D%5BStandard%5D=true'
-		const searchUrls = [];
+		console.log(`Starting daily puzzle fetch (${currentDate})...`);
 		for (const searchTerm of searchTerms) {
-			const currentDate = dayjs().format('MMMM D, YYYY');
-			const searchFilter = encodeURIComponent(`${currentDate} ${searchTerm}`);
-			searchUrls.push(`https://api.foracross.com/api/puzzle_list?page=0&pageSize=50&filter%5BnameOrTitleFilter%5D=${searchFilter}&filter%5BsizeFilter%5D%5BMini%5D=true&filter%5BsizeFilter%5D%5BStandard%5D=true`);
-		}
+			const allChannels = await guild.channels.fetch();
+			if (await checkIfTooManyPuzzles(guilds[0], allChannels)) {
+				console.log(`\tToo many puzzles, skipping ${searchTerm}`);
+				continue;
+			}
 
-		for (const searchUrl of searchUrls) {
-			// await fetch(searchUrl);
+			const searchFilter = encodeURIComponent(`${currentDate} ${searchTerm}`);
+			const searchUrl = `https://api.foracross.com/api/puzzle_list?page=0&pageSize=50&filter%5BnameOrTitleFilter%5D=${searchFilter}&filter%5BsizeFilter%5D%5BMini%5D=true&filter%5BsizeFilter%5D%5BStandard%5D=true`;
+
+			console.log(`\tSearching for ${searchTerm} puzzles...`);
 			const fetchData = await fetch(searchUrl, {
 				headers: {
 					accept: '*/*',
@@ -32,6 +37,12 @@ export default function SetupCron(client: ClientWithCommands) {
 			// parse as json
 			const puzzlesJson = (await fetchData.json()) as APIResponse;
 
+			// handle no results. Oops?
+			if (puzzlesJson.puzzles.length === 0) {
+				console.log(`\tNo puzzles found for ${searchTerm}`);
+				continue;
+			}
+
 			// Get the first puzzle, assuming there's only one important result
 			// const puzzleInfo = puzzlesJson['puzzles'][0]['content']['info'];
 			// https://downforacross.com/beta/play/35406
@@ -42,6 +53,7 @@ export default function SetupCron(client: ClientWithCommands) {
 				replacement: '_',
 				lower: true,
 			});
+			console.log(`\tFound puzzle: ${puzzleTitle} (pid: ${puzzleId}). Navigating to puzzle...`);
 
 			const browser = await chromium.launch();
 			const page = await browser.newPage();
@@ -53,8 +65,12 @@ export default function SetupCron(client: ClientWithCommands) {
 			await page.waitForURL('https://downforacross.com/beta/game/*');
 			const url = await page.url();
 
+			console.log(`\tGot puzzle URL: ${url}`);
+			console.log(`\tCreating channel ${channelTitle}...`);
+
 			const _ = await createChannel(guilds[0], channelTitle, url, client.user?.id || '');
 		}
+		console.log(`Finished daily puzzle fetch (${currentDate})`);
 	});
 }
 

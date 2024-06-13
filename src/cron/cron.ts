@@ -8,8 +8,7 @@ import { chromium } from 'playwright';
 const searchTerms = ['NY Times', 'LA Times'];
 // const searchTerms = ['NY Times'];
 export default function SetupCron(client: ClientWithCommands) {
-	// cron.schedule('0 10 * * *', async () => {
-	cron.schedule('* * * * *', async () => {
+	cron.schedule('0 10 * * *', async () => {
 		const currentDate = dayjs().format('MMM D, YYYY');
 		const guilds = client.guilds.cache.map(guild => guild);
 		const guild = guilds[0]; // assume just one guild :)

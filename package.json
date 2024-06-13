@@ -24,6 +24,7 @@
   "dependencies": {
     "dayjs": "^1.11.7",
     "discord.js": "^14.15.2",
+    "node-cron": "^3.0.3",
     "playwright": "^1.44.1",
     "slugify": "^1.6.6"
   },
@@ -32,6 +33,7 @@
     "@stylistic/eslint-plugin": "^2.1.0",
     "@types/eslint__js": "^8.42.3",
     "@types/node": "^20.12.12",
+    "@types/node-cron": "^3.0.11",
     "eslint": "^8.57.0",
     "eslint-plugin-import-newlines": "^1.4.0",
     "typescript": "^5.4.5",

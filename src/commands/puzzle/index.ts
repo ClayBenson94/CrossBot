@@ -1,26 +1,23 @@
 import {
 	SlashCommandBuilder,
-	ChannelType,
-	ButtonStyle,
-	ActionRowBuilder,
-	ButtonBuilder,
 	AttachmentBuilder,
 	EmbedBuilder,
 	ChatInputCommandInteraction,
-	CategoryChannel,
 	Collection,
 	TextChannel,
 } from 'discord.js';
 import { SlashCommand } from '../';
 import { chromium } from 'playwright';
 import slugify from 'slugify';
-import {
-	ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID,
-	PUZZ_WATCHERS_ROLE_ID,
-	OLD_PUZZLES_CHANNEL_CATEGORY_ID,
-} from '../../config';
+import { ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID, OLD_PUZZLES_CHANNEL_CATEGORY_ID } from '../../config';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import {
+	urlFormatIsValid,
+	checkIfTooManyPuzzles,
+	fetchPuzzleTitleFromUrl,
+	createChannel,
+} from './new';
 dayjs.extend(relativeTime);
 
 const NEW_PUZZLE_SUBCMD = 'new';
@@ -73,37 +70,20 @@ async function newpuzzle(interaction: ChatInputCommandInteraction) {
 			return;
 		}
 
-		const DFAC_REGEX = /https:\/\/downforacross.com\/beta\/game\/(.*)/im; // create this each function so that .test() doesn't mess up lastindex
-		const url = interaction.options.getString('url');
-		const match = url?.match(DFAC_REGEX);
-		if (!match || !url) {
+		const url = interaction.options.getString('url') || '';
+		if (!urlFormatIsValid(url)) {
 			await interaction.editReply('⚠️ Your URL didn\'t seem to be quite what I expected.\nMake sure it\'s got "/beta/game" in it to ensure it\'s a puzzle session!');
-			return;
 		}
 
 		// Check to see if we have too many puzzles already
-
 		const allChannels = await guild.channels.fetch();
-		const numActivePuzzles = allChannels.filter((ch) => {
-			return ch?.parentId === ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID;
-		}).size;
-
-		if (numActivePuzzles >= 5) {
+		if (await checkIfTooManyPuzzles(guild, allChannels)) {
 			await interaction.editReply(`⚠️ There are too many puzzles currently active! Try completing some of the existing ones first! 🧠`);
 			return;
 		}
 
 		// Get the title of the puzzle
-		const browser = await chromium.launch();
-		const page = await browser.newPage();
-		await page.setViewportSize({
-			width: 1280,
-			height: 1080,
-		});
-		await page.goto(url);
-		const puzzleTitle = await page.locator('.chat--header--title').textContent();
-		await browser.close();
-
+		const puzzleTitle = await fetchPuzzleTitleFromUrl(url);
 		if (!puzzleTitle) {
 			await interaction.editReply('⚠️ I couldn\'t find the puzzle title on that page!');
 			return;
@@ -127,28 +107,8 @@ async function newpuzzle(interaction: ChatInputCommandInteraction) {
 		}
 
 		// make the channel
-		const categoryChannel = await guild.channels.fetch(ACTIVE_PUZZLES_CHANNEL_CATEGORY_ID) as CategoryChannel;
-		const createdChannel = await guild.channels.create({
-			name: channelTitle,
-			type: ChannelType.GuildText,
-			parent: categoryChannel,
-			topic: url,
-		});
-
-		// build and send an announcement message
-		const row = new ActionRowBuilder<ButtonBuilder>()
-			.addComponents(
-				new ButtonBuilder()
-					.setLabel('Play this crossword!')
-					.setStyle(ButtonStyle.Link)
-					.setURL(url),
-			);
-
-		const msg = await createdChannel.send({
-			content: `🧩🚨 <@&${PUZZ_WATCHERS_ROLE_ID}> New Puzzle added!\nThanks to <@${interaction.member?.user.id}> for submitting this one! 🤜 🤛`,
-			components: [row],
-		});
-		await msg.pin();
+		const submitterUserId = interaction.member?.user.id || '';
+		const createdChannel = await createChannel(guild, channelTitle, url, submitterUserId);
 
 		// Reply to the user to point them to the new channel
 		await interaction.editReply(`<#${createdChannel.id}> has been created! 🎉`);

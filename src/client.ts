@@ -6,10 +6,11 @@ import {
 	MessageType,
 } from 'discord.js';
 import { SlashCommand, commands } from './commands';
+import SetupCron from './cron/cron';
 
 const token = process.env.DISCORD_BOT_TOKEN;
 
-interface ClientWithCommands extends Client {
+export interface ClientWithCommands extends Client {
 	commands: Collection<string, SlashCommand>
 }
 
@@ -76,6 +77,7 @@ export function SetupClient(login = true) {
 			client.once(Events.ClientReady, (c) => {
 				console.log(`Ready! Logged in as ${c.user.tag}`);
 				resolve(client);
+				SetupCron(client);
 			});
 		});
 

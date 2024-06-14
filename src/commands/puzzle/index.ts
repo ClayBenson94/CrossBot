@@ -16,6 +16,8 @@ import {
 	checkIfTooManyPuzzles,
 	fetchPuzzleTitleFromUrl,
 	createChannel,
+	commentDicsordLinksInGameChat,
+	newBrowserAndPage,
 } from './helpers';
 import config from '../../config';
 dayjs.extend(relativeTime);
@@ -82,8 +84,11 @@ async function newpuzzle(interaction: ChatInputCommandInteraction) {
 			return;
 		}
 
+		// create a new browser for this instance of the command
+		const [browser, page] = await newBrowserAndPage();
+
 		// Get the title of the puzzle
-		const puzzleTitle = await fetchPuzzleTitleFromUrl(url);
+		const puzzleTitle = await fetchPuzzleTitleFromUrl(page, url);
 		if (!puzzleTitle) {
 			await interaction.editReply('⚠️ I couldn\'t find the puzzle title on that page!');
 			return;
@@ -110,8 +115,12 @@ async function newpuzzle(interaction: ChatInputCommandInteraction) {
 		const submitterUserId = interaction.member?.user.id || '';
 		const createdChannel = await createChannel(guild, channelTitle, url, submitterUserId);
 
+		// comment links in the game chat
+		await commentDicsordLinksInGameChat(page, url, channelTitle, guild.id, createdChannel.id);
+
 		// Reply to the user to point them to the new channel
 		await interaction.editReply(`<#${createdChannel.id}> has been created! 🎉`);
+		await browser.close();
 	}
 	catch (e) {
 		console.error('Error in command', e);

@@ -2,8 +2,11 @@ import cron from 'node-cron';
 import dayjs from 'dayjs';
 import { ClientWithCommands } from '../client';
 import slugify from 'slugify';
-import { checkIfTooManyPuzzles, createChannel } from '../commands/puzzle/helpers';
-import { chromium } from 'playwright';
+import {
+	checkIfTooManyPuzzles,
+	createChannel,
+	newBrowserAndPage,
+} from '../commands/puzzle/helpers';
 import config from '../config';
 
 export default function SetupCron(client: ClientWithCommands) {
@@ -13,6 +16,7 @@ export default function SetupCron(client: ClientWithCommands) {
 		const guild = guilds[0]; // assume just one guild :)
 
 		console.log(`Starting daily puzzle fetch (${currentDate})...`);
+		const [browser, page] = await newBrowserAndPage();
 		for (const searchTerm of config.dailyPuzzleTerms) {
 			const allChannels = await guild.channels.fetch();
 			if (await checkIfTooManyPuzzles(guilds[0], allChannels)) {
@@ -53,12 +57,6 @@ export default function SetupCron(client: ClientWithCommands) {
 			});
 			console.log(`\tFound puzzle: ${puzzleTitle} (pid: ${puzzleId}). Navigating to puzzle...`);
 
-			const browser = await chromium.launch();
-			const page = await browser.newPage();
-			await page.setViewportSize({
-				width: 1280,
-				height: 1080,
-			});
 			await page.goto(`https://downforacross.com/beta/play/${puzzleId}`);
 			await page.waitForURL('https://downforacross.com/beta/game/*');
 			const url = await page.url();
@@ -68,6 +66,7 @@ export default function SetupCron(client: ClientWithCommands) {
 
 			const _ = await createChannel(guilds[0], channelTitle, url, client.user?.id || '');
 		}
+		await browser.close();
 		console.log(`Finished daily puzzle fetch (${currentDate})`);
 	});
 }

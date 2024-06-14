@@ -10,7 +10,11 @@ import {
 	TextChannel,
 } from 'discord.js';
 import config from '../../config';
-import { chromium } from 'playwright';
+import {
+	Browser,
+	Page,
+	chromium,
+} from 'playwright';
 
 const DFAC_REGEX = /https:\/\/downforacross.com\/beta\/game\/(.*)/im; // create this each function so that .test() doesn't mess up lastindex
 
@@ -34,17 +38,43 @@ export const checkIfTooManyPuzzles = async (guild: Guild, channels: Collection<s
 	return false;
 };
 
-export const fetchPuzzleTitleFromUrl = async (url: string): Promise<string | null> => {
+export const newBrowserAndPage = async (): Promise<[Browser, Page]> => {
 	const browser = await chromium.launch();
 	const page = await browser.newPage();
 	await page.setViewportSize({
 		width: 1280,
 		height: 1080,
 	});
+	return [browser, page];
+};
+
+export const fetchPuzzleTitleFromUrl = async (page: Page, url: string): Promise<string | null> => {
 	await page.goto(url);
 	const puzzleTitle = await page.locator('.chat--header--title').textContent();
-	await browser.close();
 	return puzzleTitle;
+};
+
+export const renameDFACUser = async (page: Page): Promise<void> => {
+	await page.locator('.chat--username--input').fill('Crossbot');
+	await page.locator('.chat--username--input').press('Enter');
+};
+
+export const commentDicsordLinksInGameChat = async (page: Page, url: string, channelName: string, serverID: string, channelID: string): Promise<void> => {
+	await page.goto(url);
+	await renameDFACUser(page);
+	const discordURLNoProtocol = `discord.com/channels/${serverID}/${channelID}`;
+	const chatMessages = [
+		`Hey everyone, Crossbot here!`,
+		`Here's a few links back to our Discord Server (these will only work if you're already a member!)`,
+		`(You'll need to copy them into your browser to get to the right place)`,
+		`Go to the #${channelName} channel (Discord): discord://${discordURLNoProtocol}`,
+		`Go to the #${channelName} channel (Browser): https://${discordURLNoProtocol}`,
+	];
+	for (const chatMessage of chatMessages) {
+		await page.locator('.chat--bar--input').fill(chatMessage);
+		await page.locator('.chat--bar--input').press('Enter');
+	}
+	return;
 };
 
 export const createChannel = async (guild: Guild, title: string, url: string, submitterUserId: string): Promise<TextChannel> => {

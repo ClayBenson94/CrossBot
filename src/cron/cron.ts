@@ -4,6 +4,7 @@ import { ClientWithCommands } from '../client';
 import slugify from 'slugify';
 import {
 	checkIfTooManyPuzzles,
+	commentDicsordLinksInGameChat,
 	createChannel,
 	newBrowserAndPage,
 } from '../commands/puzzle/helpers';
@@ -64,7 +65,9 @@ export default function SetupCron(client: ClientWithCommands) {
 			console.log(`\tGot puzzle URL: ${url}`);
 			console.log(`\tCreating channel ${channelTitle}...`);
 
-			const _ = await createChannel(guilds[0], channelTitle, url, client.user?.id || '');
+			const createdChannel = await createChannel(guilds[0], channelTitle, url, client.user?.id || '');
+
+			await commentDicsordLinksInGameChat(page, url, channelTitle, guild.id, createdChannel.id);
 		}
 		await browser.close();
 		console.log(`Finished daily puzzle fetch (${currentDate})`);

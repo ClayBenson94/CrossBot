@@ -156,7 +156,7 @@ async function closepuzzle(interaction: ChatInputCommandInteraction) {
 			return isTextBased && isPartOfOldChannelCategory;
 		}) as Collection<string, TextChannel>; // This TextChannel cast is safe because we're filtering for text channels with .isTextBased()
 
-		const MAX_OLD_PUZZLES = 2; // Discord has a max of 50 channels, so stay just a few short of that
+		const MAX_OLD_PUZZLES = 45; // Discord has a max of 50 channels, so stay just a few short of that
 		// If we have too many old puzzles and need to start deleting them
 		if (oldPuzzles.size > MAX_OLD_PUZZLES) {
 			// Fetch message counts per channel to identify which to delete
